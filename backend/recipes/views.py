@@ -5,7 +5,7 @@ from rest_framework import status, viewsets
 from rest_framework.decorators import action, api_view
 from rest_framework.generics import get_object_or_404
 from rest_framework.pagination import PageNumberPagination
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.response import Response
 
 from recipes.permissions import AuthorOrAdminPermission, ReadOnly
@@ -21,7 +21,7 @@ from .serializers import (IngredientSerializer, RecipeGETShortSerializer,
 class RecipeViewSet(viewsets.ModelViewSet):
     queryset = Recipe.objects.all()
     serializer_class = RecipeSerializer
-    permission_classes = (ReadOnly, )
+    # permission_classes = (AllowAny, )
     pagination_class = PageNumberPagination
 
     def perform_create(self, serializer):
@@ -32,13 +32,13 @@ class RecipeViewSet(viewsets.ModelViewSet):
             return RecipeSerializer
         return RecipePOSTSerializer
 
-    def get_permissions(self):
-        if self.action in ('list', 'retrieve'):
-            return super().get_permissions()
-        if self.action in ('update', 'partial_update', 'destroy'):
-            return (AuthorOrAdminPermission(),)
-        if self.action == 'create':
-            return (IsAuthenticated(),)
+    # def get_permissions(self):
+    #     if self.action in ('list', 'retrieve'):
+    #         return (AllowAny(), )
+    #     if self.action in ('update', 'partial_update', 'destroy'):
+    #         return (AuthorOrAdminPermission(),)
+    #     if self.action == 'create':
+    #         return (IsAuthenticated(),)
 
 
 class FavoritesOrShopingViewSet(viewsets.ModelViewSet):
