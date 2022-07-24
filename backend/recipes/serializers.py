@@ -61,25 +61,6 @@ class TagPOSTSerializer(serializers.ModelSerializer):
             'color': {'read_only': True},
         }
 
-# class IngredientForRecipeSerializer(serializers.ModelSerializer):
-#     id = serializers.SerializerMethodField()
-#     name = serializers.SerializerMethodField()
-#     measurement_unit = serializers.SerializerMethodField()
-
-#     class Meta:
-#         model = IngredientForRecipe
-#         fields = ('id', 'name', 'measurement_unit', 'amount')
-
-#     def get_id(self, obj):
-#         print(obj.ingredient.id, 'ghjgjhghgjhghjgkhgkghj')
-#         return obj.ingredient.id
-
-#     def get_name(self, obj):
-#         return obj.ingredient.name
-
-#     def get_measurement_unit(self, obj):
-#         return obj.ingredient.measurement_unit
-
 
 class IngredientSerializer(serializers.ModelSerializer):
     class Meta:

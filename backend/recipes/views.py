@@ -1,14 +1,14 @@
 # from filters import TitleFilter
 from django.db.models import Count
 from django.http import HttpResponse
-from rest_framework import status, viewsets
-from rest_framework.decorators import action, api_view
+from rest_framework import status, viewsets, mixins
+from rest_framework.decorators import action, api_view, permission_classes
 from rest_framework.generics import get_object_or_404
 from rest_framework.pagination import PageNumberPagination
-from rest_framework.permissions import IsAuthenticated, AllowAny
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
-from recipes.permissions import AuthorOrAdminPermission, ReadOnly
+from recipes.permissions import AuthorOrReadPermission
 from users.models import User
 
 from .models import (Favourites, Follow, Ingredient, IngredientForRecipe,
@@ -21,7 +21,7 @@ from .serializers import (IngredientSerializer, RecipeGETShortSerializer,
 class RecipeViewSet(viewsets.ModelViewSet):
     queryset = Recipe.objects.all()
     serializer_class = RecipeSerializer
-    # permission_classes = (AllowAny, )
+    permission_classes = [AuthorOrReadPermission]
     pagination_class = PageNumberPagination
 
     def perform_create(self, serializer):
@@ -31,14 +31,6 @@ class RecipeViewSet(viewsets.ModelViewSet):
         if self.action in ('list', 'retrieve'):
             return RecipeSerializer
         return RecipePOSTSerializer
-
-    # def get_permissions(self):
-    #     if self.action in ('list', 'retrieve'):
-    #         return (AllowAny(), )
-    #     if self.action in ('update', 'partial_update', 'destroy'):
-    #         return (AuthorOrAdminPermission(),)
-    #     if self.action == 'create':
-    #         return (IsAuthenticated(),)
 
 
 class FavoritesOrShopingViewSet(viewsets.ModelViewSet):
@@ -113,15 +105,18 @@ class FavoritesOrShopingViewSet(viewsets.ModelViewSet):
             return Response(text, status=status.HTTP_400_BAD_REQUEST)
 
 
-class IngredientViewSet(viewsets.ModelViewSet):
+class IngredientViewSet(mixins.ListModelMixin,
+                        mixins.CreateModelMixin,
+                        viewsets.GenericViewSet):
     queryset = Ingredient.objects.all()
     serializer_class = IngredientSerializer
 
 
-class TagViewSet(viewsets.ModelViewSet):
+class TagViewSet(mixins.ListModelMixin,
+                 mixins.CreateModelMixin,
+                 viewsets.GenericViewSet):
     queryset = Tag.objects.all()
     serializer_class = TagSerializer
-    permission_classes = (ReadOnly,)
 
 
 class FollowViewSet(viewsets.ModelViewSet):
@@ -168,6 +163,7 @@ class FollowViewSet(viewsets.ModelViewSet):
 
 
 @api_view(['GET'])
+@permission_classes([IsAuthenticated])
 def download_shopping_cart(request):
     recipes = Recipe.objects.filter(shopping_cart__user=request.user)
     if recipes is None:
@@ -201,6 +197,7 @@ def download_shopping_cart(request):
 
 
 @api_view(['GET'])
+@permission_classes([IsAuthenticated])
 def subscriptions(request):
     follow = User.objects.filter(
         following__user=request.user).annotate(
@@ -216,6 +213,7 @@ def subscriptions(request):
 
 
 @api_view(['GET'])
+@permission_classes([IsAuthenticated])
 def favorites(request):
     favourites = Recipe.objects.filter(
         in_favorite__user=request.user)
@@ -227,6 +225,7 @@ def favorites(request):
 
 
 @api_view(['GET'])
+@permission_classes([IsAuthenticated])
 def shoping_list(request):
     shoping_list = Recipe.objects.filter(
         shopping_cart__user=request.user)
