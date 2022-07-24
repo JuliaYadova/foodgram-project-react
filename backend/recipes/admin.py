@@ -33,12 +33,15 @@ class IngredientForRecipeInline(admin.TabularInline):
 
 class RecipeAdmin(admin.ModelAdmin):
     date_hierarchy = 'pub_date'
-    list_display = ('name', 'author',)
+    list_display = ('name', 'author', 'count_in_favorite')
     search_fields = ('username', 'email')
     list_filter = ('name', 'author', 'tags',)
     empty_value_display = '-пусто-'
     autocomplete_fields = ['tags']
     inlines = (IngredientForRecipeInline,)
+
+    def count_in_favorite(self, obj):
+        return obj.in_favorite.count()
 
 
 admin.site.register(Recipe, RecipeAdmin)
