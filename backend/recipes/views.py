@@ -1,7 +1,7 @@
-# from filters import TitleFilter
 from django.db.models import Count
 from django.http import HttpResponse
-from django_filters.rest_framework import DjangoFilterBackend, SearchFilter
+from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework.filters import SearchFilter
 from recipes.filters import RecipeFilter
 from recipes.models import (Favourites, Follow, Ingredient,
                             IngredientForRecipe, Recipe, Shopping_cart, Tag)
@@ -11,10 +11,10 @@ from recipes.serializers import (IngredientSerializer,
                                  RecipeGETShortSerializer,
                                  RecipePOSTSerializer, RecipeSerializer,
                                  TagSerializer, UserFollowSerializer)
-from rest_framework import mixins, status, viewsets
+from rest_framework import status, viewsets
 from rest_framework.decorators import action, api_view, permission_classes
 from rest_framework.generics import get_object_or_404
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.response import Response
 from users.models import User
 
@@ -34,6 +34,11 @@ class RecipeViewSet(viewsets.ModelViewSet):
         if self.action in ('list', 'retrieve'):
             return RecipeSerializer
         return RecipePOSTSerializer
+
+    def get_permissions(self):
+        if self.action not in ('list', 'retrieve'):
+            return super().get_permissions()
+        return (AllowAny(),)
 
 
 class FavoritesOrShopingViewSet(viewsets.ModelViewSet):
@@ -108,20 +113,18 @@ class FavoritesOrShopingViewSet(viewsets.ModelViewSet):
             return Response(text, status=status.HTTP_400_BAD_REQUEST)
 
 
-class IngredientViewSet(mixins.ListModelMixin,
-                        mixins.CreateModelMixin,
-                        viewsets.GenericViewSet):
+class IngredientViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Ingredient.objects.all()
     serializer_class = IngredientSerializer
     filter_backends = (SearchFilter,)
+    filterset_fields = ('name',)
     search_fields = ('^name',)
 
 
-class TagViewSet(mixins.ListModelMixin,
-                 mixins.CreateModelMixin,
-                 viewsets.GenericViewSet):
+class TagViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Tag.objects.all()
     serializer_class = TagSerializer
+    pagination_class = None
 
 
 class FollowViewSet(viewsets.ModelViewSet):
