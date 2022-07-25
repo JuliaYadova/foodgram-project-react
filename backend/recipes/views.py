@@ -218,27 +218,3 @@ def subscriptions(request):
                                       context={'request': request},
                                       many=True)
     return Response(serializer.data, status=status.HTTP_200_OK)
-
-
-@api_view(['GET'])
-@permission_classes([IsAuthenticated])
-def favorites(request):
-    favourites = Recipe.objects.filter(
-        in_favorite__user=request.user)
-    if favourites is None:
-        text = 'Тут будет список избранного.'
-        return Response(text, status=status.HTTP_200_OK)
-    serializer = RecipeGETShortSerializer(favourites, many=True)
-    return Response(serializer.data, status=status.HTTP_200_OK)
-
-
-@api_view(['GET'])
-@permission_classes([IsAuthenticated])
-def shoping_list(request):
-    shoping_list = Recipe.objects.filter(
-        shopping_cart__user=request.user)
-    if shoping_list is None:
-        text = 'Тут будет список рецептов.'
-        return Response(text, status=status.HTTP_200_OK)
-    serializer = RecipeGETShortSerializer(shoping_list, many=True)
-    return Response(serializer.data, status=status.HTTP_200_OK)
