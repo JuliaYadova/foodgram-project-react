@@ -22,7 +22,7 @@ class Tag(models.Model):
                 fields=['name', 'slug'], name='unique_slug'
             )
         ]
-        ordering = ['-name']
+        ordering = ['name']
         verbose_name = 'Тэг'
         verbose_name_plural = 'Тэги'
 
@@ -43,12 +43,12 @@ class Ingredient(models.Model):
                                         verbose_name='Единица измерения')
 
     class Meta:
+        ordering = ['name']
         constraints = [
             models.UniqueConstraint(
                 fields=['name', 'measurement_unit'], name='unique_ingredient'
             )
         ]
-        ordering = ['-name']
         verbose_name = 'Ингридиент'
         verbose_name_plural = 'Ингридиенты'
 

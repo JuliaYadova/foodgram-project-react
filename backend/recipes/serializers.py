@@ -3,9 +3,9 @@ from rest_framework import serializers
 from users.models import User
 from users.serializers import CustomUserSerializer
 
+from .fields import Base64ImageField
 from .models import (Favourite, Ingredient, IngredientForRecipe, Recipe,
                      ShoppingCart, Tag)
-from .fields import Base64ImageField
 
 
 class IngredientSerializer(serializers.ModelSerializer):

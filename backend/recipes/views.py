@@ -3,7 +3,7 @@ from django.http import HttpResponse
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import status, viewsets
 from rest_framework.decorators import action, api_view, permission_classes
-from rest_framework.generics import get_object_or_404
+from rest_framework.generics import ListAPIView, get_object_or_404
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
@@ -86,11 +86,11 @@ class FavoritesOrShopingViewSet(viewsets.ModelViewSet):
         return self.create_or_del_recipe_in_db(request, pk, ShoppingCart)
 
 
-class IngredientViewSet(viewsets.ReadOnlyModelViewSet):
+class IngredientViewSet(viewsets.ModelViewSet):
     queryset = Ingredient.objects.all()
     serializer_class = IngredientSerializer
+    pagination_class = None
     filterset_class = IngredientSearchFilter
-    filter_backends = [IngredientSearchFilter]
     search_fields = ('^name',)
 
 
@@ -111,17 +111,16 @@ class FollowViewSet(viewsets.ModelViewSet):
     )
     def subscribe(self, request, pk=None):
         if request.method == 'POST':
-            following = User.objects.get_object_or_404(User, id=pk)
-            if following == self.request.user:
+            if pk == self.request.user.id:
                 text = 'errors: Нельзя подписаться на самого себя.'
                 return Response(text, status=status.HTTP_400_BAD_REQUEST)
             if not Follow.objects.filter(
                     user=self.request.user,
-                    following=following).exists():
+                    following_id=pk).exists():
                 Follow.objects.create(
                     user=self.request.user,
-                    following=following)
-                follow = following.annotate(
+                    following_id=pk)
+                follow = User.objects.filter(id=pk).annotate(
                     recipes_count=Count('recipe'))
                 serializer = UserFollowSerializer(follow,
                                                   context={'request': request},
@@ -143,20 +142,20 @@ class FollowViewSet(viewsets.ModelViewSet):
             return Response(text, status=status.HTTP_400_BAD_REQUEST)
 
 
-@api_view(['GET'])
-@permission_classes([IsAuthenticated])
-def subscriptions(request):
-    follow = User.objects.filter(
-        following__user=request.user).annotate(
-            recipes_count=Count('recipe'))
-    if not User.objects.filter(
-            following__user=request.user).exists():
-        text = 'Тут будет список избранного.'
-        return Response(text, status=status.HTTP_200_OK)
-    serializer = UserFollowSerializer(follow,
-                                      context={'request': request},
-                                      many=True)
-    return Response(serializer.data, status=status.HTTP_200_OK)
+class FollowGETAPIView(ListAPIView):
+    pagination_class = LimitPageNumberPagination
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        follow = User.objects.filter(
+            following__user=request.user).annotate(
+                recipes_count=Count('recipe'))
+        paginate = self.paginate_queryset(follow)
+        serializer = UserFollowSerializer(paginate,
+                                          context={'request': request},
+                                          many=True)
+        get_page = self.get_paginated_response(serializer.data)
+        return get_page
 
 
 @api_view(['GET'])
