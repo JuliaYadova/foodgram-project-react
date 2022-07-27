@@ -1,6 +1,7 @@
 from djoser.serializers import UserSerializer
-from recipes.models import Follow
 from rest_framework import serializers
+
+from recipes.models import Follow
 from users.models import User
 
 
@@ -23,7 +24,5 @@ class CustomUserSerializer(UserSerializer):
         request_profile = obj.id
         if user == request_profile:
             return False
-        if Follow.objects.filter(user_id=user,
-                                 following_id=request_profile).exists():
-            return True
-        return False
+        return Follow.objects.filter(user_id=user,
+                                     following_id=request_profile).exists()

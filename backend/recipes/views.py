@@ -1,21 +1,21 @@
-from django.db.models import Count
+from django.db.models import Count, Sum
 from django.http import HttpResponse
 from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework.filters import SearchFilter
-from recipes.filters import RecipeFilter
-from recipes.models import (Favourites, Follow, Ingredient,
-                            IngredientForRecipe, Recipe, Shopping_cart, Tag)
+from rest_framework import status, viewsets
+from rest_framework.decorators import action, api_view, permission_classes
+from rest_framework.generics import get_object_or_404
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
+
+from recipes.filters import IngredientSearchFilter, RecipeFilter
+from recipes.models import (Favourite, Follow, Ingredient, Recipe,
+                            ShoppingCart, Tag)
 from recipes.paginator import LimitPageNumberPagination
 from recipes.permissions import AuthorOrReadPermission
 from recipes.serializers import (IngredientSerializer,
                                  RecipeGETShortSerializer,
                                  RecipePOSTSerializer, RecipeSerializer,
                                  TagSerializer, UserFollowSerializer)
-from rest_framework import status, viewsets
-from rest_framework.decorators import action, api_view, permission_classes
-from rest_framework.generics import get_object_or_404
-from rest_framework.permissions import IsAuthenticated, AllowAny
-from rest_framework.response import Response
 from users.models import User
 
 
@@ -35,13 +35,35 @@ class RecipeViewSet(viewsets.ModelViewSet):
             return RecipeSerializer
         return RecipePOSTSerializer
 
-    def get_permissions(self):
-        if self.action not in ('list', 'retrieve'):
-            return super().get_permissions()
-        return (AllowAny(),)
-
 
 class FavoritesOrShopingViewSet(viewsets.ModelViewSet):
+
+    def create_or_del_recipe_in_db(self, request, pk, database):
+        if request.method == 'POST':
+            recipe = get_object_or_404(Recipe, id=pk)
+            if not database.objects.filter(
+                    user=self.request.user,
+                    recipe=recipe).exists():
+                database.objects.create(
+                    user=self.request.user,
+                    recipe=recipe)
+                serializer = RecipeGETShortSerializer(recipe)
+                return Response(serializer.data,
+                                status=status.HTTP_201_CREATED)
+            text = 'errors: Объект уже в списке.'
+            return Response(text, status=status.HTTP_400_BAD_REQUEST)
+        if request.method == 'DELETE':
+            recipe = get_object_or_404(Recipe, id=pk)
+            if database.objects.filter(
+                    user=self.request.user,
+                    recipe=recipe).exists():
+                database.objects.filter(
+                    user=self.request.user,
+                    recipe=recipe).delete()
+                return Response(status=status.HTTP_204_NO_CONTENT)
+            text = 'errors: Объект не в списке.'
+            return Response(text, status=status.HTTP_400_BAD_REQUEST)
+
     @action(
         detail=True,
         methods=(
@@ -51,31 +73,7 @@ class FavoritesOrShopingViewSet(viewsets.ModelViewSet):
         permission_classes=[IsAuthenticated],
     )
     def favorite(self, request, pk=None):
-        if request.method == 'POST':
-            recipe = get_object_or_404(Recipe, id=pk)
-            if not Favourites.objects.filter(
-                    user=self.request.user,
-                    recipe=recipe).exists():
-                Favourites.objects.create(
-                    user=self.request.user,
-                    recipe=recipe)
-                favorite = Recipe.objects.get(id=pk)
-                serializer = RecipeGETShortSerializer(favorite)
-                return Response(serializer.data,
-                                status=status.HTTP_201_CREATED)
-            text = 'errors: Объект уже в избранном.'
-            return Response(text, status=status.HTTP_400_BAD_REQUEST)
-        if request.method == 'DELETE':
-            recipe = get_object_or_404(Recipe, id=pk)
-            if Favourites.objects.filter(
-                    user=self.request.user,
-                    recipe=recipe).exists():
-                Favourites.objects.filter(
-                    user=self.request.user,
-                    recipe=recipe).delete()
-                return Response(status=status.HTTP_204_NO_CONTENT)
-            text = 'errors: Объект не в избранном.'
-            return Response(text, status=status.HTTP_400_BAD_REQUEST)
+        return self.create_or_del_recipe_in_db(request, pk, Favourite)
 
     @action(
         detail=True,
@@ -85,39 +83,14 @@ class FavoritesOrShopingViewSet(viewsets.ModelViewSet):
         ),
     )
     def shopping_cart(self, request, pk=None):
-        if request.method == 'POST':
-            recipe = get_object_or_404(Recipe, id=pk)
-            if not Shopping_cart.objects.filter(
-                    user=self.request.user,
-                    recipe=recipe).exists():
-                Shopping_cart.objects.create(
-                    user=self.request.user,
-                    recipe=recipe)
-                recipe_in_list = Recipe.objects.get(id=pk)
-                serializer = RecipeGETShortSerializer(recipe_in_list)
-                return Response(serializer.data,
-                                status=status.HTTP_201_CREATED)
-            text = 'errors: Объект уже в списке.'
-            return Response(text, status=status.HTTP_400_BAD_REQUEST)
-        if request.method == 'DELETE':
-            recipe = get_object_or_404(Recipe, id=pk)
-            if Shopping_cart.objects.filter(
-                    user=self.request.user,
-                    recipe=recipe).exists():
-                recipe_in_list = get_object_or_404(Shopping_cart,
-                                                   user=self.request.user,
-                                                   recipe=recipe)
-                recipe_in_list.delete()
-                return Response(status=status.HTTP_204_NO_CONTENT)
-            text = 'errors: Объект не в списке.'
-            return Response(text, status=status.HTTP_400_BAD_REQUEST)
+        return self.create_or_del_recipe_in_db(request, pk, ShoppingCart)
 
 
 class IngredientViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Ingredient.objects.all()
     serializer_class = IngredientSerializer
-    filter_backends = (SearchFilter,)
-    filterset_fields = ('name',)
+    filterset_class = IngredientSearchFilter
+    filter_backends = [IngredientSearchFilter]
     search_fields = ('^name',)
 
 
@@ -138,7 +111,7 @@ class FollowViewSet(viewsets.ModelViewSet):
     )
     def subscribe(self, request, pk=None):
         if request.method == 'POST':
-            following = get_object_or_404(User, id=pk)
+            following = User.objects.get_object_or_404(User, id=pk)
             if following == self.request.user:
                 text = 'errors: Нельзя подписаться на самого себя.'
                 return Response(text, status=status.HTTP_400_BAD_REQUEST)
@@ -148,7 +121,7 @@ class FollowViewSet(viewsets.ModelViewSet):
                 Follow.objects.create(
                     user=self.request.user,
                     following=following)
-                follow = User.objects.filter(id=pk).annotate(
+                follow = following.annotate(
                     recipes_count=Count('recipe'))
                 serializer = UserFollowSerializer(follow,
                                                   context={'request': request},
@@ -172,40 +145,6 @@ class FollowViewSet(viewsets.ModelViewSet):
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
-def download_shopping_cart(request):
-    recipes = Recipe.objects.filter(shopping_cart__user=request.user)
-    if recipes is None:
-        text = 'errors: Список пуст.'
-        return Response(text, status=status.HTTP_400_BAD_REQUEST)
-    ingredients = {}
-    for i in recipes:
-        ingredient = IngredientForRecipe.objects.filter(recipe_id=i.id)
-        for i in ingredient:
-            ingredient_id = i.ingredient.id
-            ingredient_amount = i.amount
-            if ingredient_id in ingredients.keys():
-                amout = ingredients[ingredient_id]
-                amount_new = amout + ingredient_amount
-                ingredients[ingredient_id] = amount_new
-            else:
-                ingredients[ingredient_id] = ingredient_amount
-    shoping_list = []
-    for i in ingredients.keys():
-        ingredient = Ingredient.objects.get(pk=i)
-        ingredient_name = ingredient.name
-        ingredient_unit = ingredient.measurement_unit
-        ingredient_amount = ingredients[i]
-        shoping_list.append(
-            f"{ingredient_name} - {ingredient_amount} {ingredient_unit}.\n")
-    filename = 'my_shopping_list.txt'
-    response = HttpResponse(shoping_list, content_type='text/plain')
-    response['Content-Disposition'] = 'attachment; filename={0}'.format(
-        filename)
-    return response
-
-
-@api_view(['GET'])
-@permission_classes([IsAuthenticated])
 def subscriptions(request):
     follow = User.objects.filter(
         following__user=request.user).annotate(
@@ -218,3 +157,24 @@ def subscriptions(request):
                                       context={'request': request},
                                       many=True)
     return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def download_shopping_cart(request):
+    ingredients = (
+        Ingredient.objects.filter(
+            ingridient_for_recipe__recipe__shopping_cart__user=request.user
+        )
+        .annotate(sum_amount=Sum("ingridient_for_recipe__amount"))
+        .values_list("name", "sum_amount", "measurement_unit")
+    )
+    shoping_list = []
+    for ingredient in ingredients:
+        shoping_list.append(
+            f'{ingredient[0]} - {ingredient[1]} {ingredient[2]}.\n')
+    filename = 'my_shopping_list.txt'
+    response = HttpResponse(shoping_list, content_type='text/plain')
+    response['Content-Disposition'] = 'attachment; filename={0}'.format(
+        filename)
+    return response
