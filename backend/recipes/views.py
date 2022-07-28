@@ -91,7 +91,7 @@ class IngredientViewSet(viewsets.ReadOnlyModelViewSet):
     permission_classes = (IsAdminOrReadOnly,)
     serializer_class = IngredientSerializer
     pagination_class = None
-    filterset_class = IngredientSearchFilter
+    filter_backends = (IngredientSearchFilter,)
     search_fields = ('^name',)
 
 
