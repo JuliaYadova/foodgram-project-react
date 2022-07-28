@@ -87,12 +87,12 @@ class FavoritesOrShopingViewSet(viewsets.ModelViewSet):
 
 
 class IngredientViewSet(viewsets.ReadOnlyModelViewSet):
-    pagination_class = None
     queryset = Ingredient.objects.all()
     permission_classes = (IsAdminOrReadOnly,)
     serializer_class = IngredientSerializer
-    filter_backends = [DjangoFilterBackend, ]
-    filter_class = IngredientSearchFilter
+    pagination_class = None
+    filterset_class = IngredientSearchFilter
+    search_fields = ('^name',)
 
 
 class TagViewSet(viewsets.ReadOnlyModelViewSet):
