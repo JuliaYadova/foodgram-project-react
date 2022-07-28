@@ -43,7 +43,7 @@ class Ingredient(models.Model):
                                         verbose_name='Единица измерения')
 
     class Meta:
-        ordering = ['name']
+        ordering = ['id']
         constraints = [
             models.UniqueConstraint(
                 fields=['name', 'measurement_unit'], name='unique_ingredient'

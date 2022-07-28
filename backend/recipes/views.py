@@ -11,7 +11,7 @@ from recipes.filters import IngredientSearchFilter, RecipeFilter
 from recipes.models import (Favourite, Follow, Ingredient, Recipe,
                             ShoppingCart, Tag)
 from recipes.paginator import LimitPageNumberPagination
-from recipes.permissions import AuthorOrReadPermission
+from recipes.permissions import AuthorOrReadPermission, IsAdminOrReadOnly
 from recipes.serializers import (IngredientSerializer,
                                  RecipeGETShortSerializer,
                                  RecipePOSTSerializer, RecipeSerializer,
@@ -86,12 +86,13 @@ class FavoritesOrShopingViewSet(viewsets.ModelViewSet):
         return self.create_or_del_recipe_in_db(request, pk, ShoppingCart)
 
 
-class IngredientViewSet(viewsets.ModelViewSet):
-    queryset = Ingredient.objects.all()
-    serializer_class = IngredientSerializer
+class IngredientViewSet(viewsets.ReadOnlyModelViewSet):
     pagination_class = None
-    filterset_class = IngredientSearchFilter
-    search_fields = ('^name',)
+    queryset = Ingredient.objects.all()
+    permission_classes = (IsAdminOrReadOnly,)
+    serializer_class = IngredientSerializer
+    filter_backends = [DjangoFilterBackend, ]
+    filter_class = IngredientSearchFilter
 
 
 class TagViewSet(viewsets.ReadOnlyModelViewSet):

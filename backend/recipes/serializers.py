@@ -1,11 +1,10 @@
 from rest_framework import serializers
 
+from recipes.fields import Base64ImageField
+from recipes.models import (Favourite, Ingredient, IngredientForRecipe, Recipe,
+                            ShoppingCart, Tag)
 from users.models import User
 from users.serializers import CustomUserSerializer
-
-from .fields import Base64ImageField
-from .models import (Favourite, Ingredient, IngredientForRecipe, Recipe,
-                     ShoppingCart, Tag)
 
 
 class IngredientSerializer(serializers.ModelSerializer):
@@ -67,7 +66,7 @@ class RecipePOSTSerializer(serializers.ModelSerializer):
         }
 
     def validate(self, data):
-        ingredients = self.initial_data.get('ingredients')
+        ingredients = data.get('recipe_for_ingridient')
         if not ingredients:
             raise serializers.ValidationError({
                 'errors': 'Выберите хотя бы один ингредиент!'
@@ -80,7 +79,7 @@ class RecipePOSTSerializer(serializers.ModelSerializer):
                     'errors': 'Ингредиент не должен повторяться!'
                 })
             ingredients_list.append(ingredient)
-        tags = self.initial_data.get('tags')
+        tags = data.get('tags')
         if not tags:
             raise serializers.ValidationError({
                 'errors': 'Выберите хотя бы один тэг!'
@@ -124,7 +123,6 @@ class RecipePOSTSerializer(serializers.ModelSerializer):
         IngredientForRecipe.objects.filter(recipe_id=instance.id).delete()
         self.create_ingredients(ingredients, instance)
         super().update(instance, validated_data)
-        instance.save()
         return instance
 
     def validate_cooking_time(self, value):
@@ -167,8 +165,8 @@ class RecipeSerializer(serializers.ModelSerializer):
     def get_is_in_shopping_cart(self, obj):
         user = self.context['request'].user.id
         recipe = obj.id
-        ShoppingCart.objects.filter(user_id=user,
-                                    recipe_id=recipe).exists()
+        return ShoppingCart.objects.filter(user_id=user,
+                                           recipe_id=recipe).exists()
 
 
 class RecipeGETShortSerializer(serializers.ModelSerializer):
