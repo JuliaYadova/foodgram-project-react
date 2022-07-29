@@ -160,8 +160,7 @@ class FollowGETAPIView(ListAPIView):
         serializer = UserFollowSerializer(paginate,
                                           context={'request': request},
                                           many=True)
-        get_page = self.get_paginated_response(serializer.data)
-        return get_page
+        return self.get_paginated_response(serializer.data)
 
 
 @api_view(['GET'])
