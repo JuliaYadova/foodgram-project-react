@@ -29,6 +29,7 @@ admin.site.register(Ingredient, IngredientAdmin)
 class IngredientForRecipeInline(admin.TabularInline):
     model = IngredientForRecipe
     extra = 1
+    min_num = 1
 
 
 class RecipeAdmin(admin.ModelAdmin):
