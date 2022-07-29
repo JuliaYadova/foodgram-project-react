@@ -62,6 +62,9 @@ class FavoritesOrShopingViewSet(viewsets.ModelViewSet):
                 return Response(status=status.HTTP_204_NO_CONTENT)
             text = 'errors: Объект не в списке.'
             return Response(text, status=status.HTTP_400_BAD_REQUEST)
+        else:
+            text = 'errors: Метод обращения недопустим.'
+            return Response(text, status=status.HTTP_400_BAD_REQUEST)
 
     @action(
         detail=True,
@@ -139,6 +142,9 @@ class FollowViewSet(viewsets.ModelViewSet):
                     following=following).delete()
                 return Response(status=status.HTTP_204_NO_CONTENT)
             text = 'errors: Объект не в списке.'
+            return Response(text, status=status.HTTP_400_BAD_REQUEST)
+        else:
+            text = 'errors: Метод обращения недопустим.'
             return Response(text, status=status.HTTP_400_BAD_REQUEST)
 
 
