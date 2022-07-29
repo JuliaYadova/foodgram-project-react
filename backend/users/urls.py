@@ -1,7 +1,6 @@
 from django.urls import include, path
-from rest_framework.routers import DefaultRouter
-
 from recipes.views import FollowGETAPIView, FollowViewSet
+from rest_framework.routers import DefaultRouter
 
 app_name = 'users'
 

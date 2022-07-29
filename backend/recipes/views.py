@@ -1,12 +1,6 @@
 from django.db.models import Count, Sum
 from django.http import HttpResponse
 from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework import status, viewsets
-from rest_framework.decorators import action, api_view, permission_classes
-from rest_framework.generics import ListAPIView, get_object_or_404
-from rest_framework.permissions import IsAuthenticated
-from rest_framework.response import Response
-
 from recipes.filters import IngredientSearchFilter, RecipeFilter
 from recipes.models import (Favourite, Follow, Ingredient, Recipe,
                             ShoppingCart, Tag)
@@ -16,6 +10,11 @@ from recipes.serializers import (IngredientSerializer,
                                  RecipeGETShortSerializer,
                                  RecipePOSTSerializer, RecipeSerializer,
                                  TagSerializer, UserFollowSerializer)
+from rest_framework import status, viewsets
+from rest_framework.decorators import action, api_view, permission_classes
+from rest_framework.generics import ListAPIView, get_object_or_404
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
 from users.models import User
 
 
