@@ -79,7 +79,7 @@ class RecipePOSTSerializer(serializers.ModelSerializer):
                     'errors': 'Ингредиент не должен повторяться!'
                 })
             ingredients_list.append(ingredient)
-            if amount <= 0:
+            if int(amount) <= 0:
                 raise serializers.ValidationError({
                     'errors': 'Количество ингридиента должно быть больше нуля.'
                 })
