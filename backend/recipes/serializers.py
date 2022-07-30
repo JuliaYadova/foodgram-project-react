@@ -72,19 +72,18 @@ class RecipePOSTSerializer(serializers.ModelSerializer):
             })
         ingredients_list = []
         for ingredient in ingredients:
-            ingredient = ingredient['id']
-            amount = ingredient['amount']
-            if ingredient in ingredients_list:
+            ingredient_obj = ingredient['id']
+            if ingredient_obj in ingredients_list:
                 raise serializers.ValidationError({
                     'errors': 'Ингредиент не должен повторяться!'
                 })
-            ingredients_list.append(ingredient)
-            if int(amount) <= 0:
+            ingredients_list.append(ingredient_obj)
+            amount = ingredient['amount']
+            if amount <= 0:
                 raise serializers.ValidationError({
                     'errors': 'Количество ингридиента должно быть больше нуля.'
                 })
-            else:
-                continue
+
         tags = data.get('tags')
         if not tags:
             raise serializers.ValidationError({
