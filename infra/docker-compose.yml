@@ -20,6 +20,8 @@ services:
     volumes:
       - static_value:/app/backend_static/
       - media_value:/app/media/
+    env_file:
+      - ./.env
     container_name: foodgram_web
   
   frontend:
