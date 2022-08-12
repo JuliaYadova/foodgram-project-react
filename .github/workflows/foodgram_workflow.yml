@@ -58,7 +58,7 @@ jobs:
             sudo docker pull ${{ secrets.DOCKER_USERNAME }}/foodgram:latest
             sudo docker pull ${{ secrets.DOCKER_USERNAME }}/foodgram_front:latest
             sudo docker-compose stop
-            sudo docker-compose rm -f web
+            sudo docker-compose rm -f foodgram_web
             sudo docker-compose rm -f frontend
             rm .env
             touch .env
