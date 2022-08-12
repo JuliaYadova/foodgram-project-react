@@ -113,9 +113,9 @@ git clone https://github.com/JuliaYadova/foodgram-project-react
 ## Автор:
 Ядова Юлия
 
-# Для теста Админки: 
-login: Admin@admin.ru 
-Password: Fghti876
-Сайт:http://178.154.194.146/admin/
+## Сайт:
+[Главная страница:](http://178.154.194.146/index)
 
-Главная страница: http://178.154.194.146/index
+
+
+
