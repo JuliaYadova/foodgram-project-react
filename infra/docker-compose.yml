@@ -3,22 +3,20 @@ version: '3.3'
 services:
   foodgram_web:
     image: yadovj/foodgram:latest
-    expose:
-      - 80
     restart: always
     volumes:
       - static_value:/app/backend_static/
       - media_value:/app/media/
     env_file:
       - ./.env
-    container_name: foodgram_web
-  
+ 
   frontend:
     depends_on:
       - foodgram_web
     image: yadovj/foodgram_front:latest
     volumes:
       - ../frontend/:/app/result_build/
+
   nginx:
     image: nginx:1.19.3
     restart: always
