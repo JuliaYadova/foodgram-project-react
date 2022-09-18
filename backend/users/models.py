@@ -4,6 +4,13 @@ from users.validators import username_validator
 
 
 class User(AbstractUser):
+    """Пользовательский пользователь.
+    Наследуется от AbstractUser.
+    Переопределены поля авторизации.
+
+    Returns:
+        str: имя пользователя.
+    """
     username = models.CharField(
         'Логин',
         max_length=150,

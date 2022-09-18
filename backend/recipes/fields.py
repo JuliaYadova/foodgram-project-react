@@ -8,6 +8,8 @@ from rest_framework import serializers
 
 
 class Base64ImageField(serializers.ImageField):
+    """Конвертация изображения из кодировки base64.
+    """
 
     def to_internal_value(self, data):
         if isinstance(data, six.string_types):

@@ -5,6 +5,10 @@ from .models import User
 
 
 class UserAdmin(UserAdmin):
+    """Пользователи.
+    Наследуется от UserAdmin.
+    Настроены поля фильтрации.
+    """
     list_filter = ('username', 'email',)
 
 
