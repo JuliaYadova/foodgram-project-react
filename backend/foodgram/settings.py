@@ -14,7 +14,8 @@ ALLOWED_HOSTS = ['178.154.194.146',
                  '94.103.86.153',
                  'localhost',
                  '127.0.0.1',
-                 'web']
+                 'web',
+                 'foodgram.julia-ya.site']
 
 INSTALLED_APPS = [
     'django.contrib.admin',
