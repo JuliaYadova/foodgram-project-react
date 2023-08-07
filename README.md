@@ -114,8 +114,7 @@ git clone https://github.com/JuliaYadova/foodgram-project-react
 Ядова Юлия
 
 
-## Сайт:
-[Главная страница](http://foodgram.julia-ya.site/)
+
 
 
 
